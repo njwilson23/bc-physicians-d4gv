@@ -66,11 +66,17 @@ def extract_doctor(tag):
     for li in td.find_all("li"):
         d["addresses"].append(li.find(attrs={"class": "physio-address-data"}).text)
     td = td.next_sibling
-    d["practice"] = td.text
-    td = td.next_sibling
+    for s in td.strings:
+        d["practice"] = s
+        break
     d["gender"] = td.text
     td = td.next_sibling
     d["accepting_new_patients"] = td.text
+    d["specialities"] = []
+    spec = tag.find(attrs={"class": "specialty_list"})
+    if spec is not None:
+        for li in spec.find_all("li"):
+            d["specialities"].append(li.string)
     return d
 
 def parse_result_page(soup):
@@ -132,6 +138,8 @@ while len(queries_to_try) != 0:
         doctors, further_links = parse_result_page(soup)
         for link in further_links:
             soup = get_query(cookie, url=link)
+            for br in soup.find_all("br"):
+                br.replace_with("\n")
             d, _ = parse_result_page(soup)
             doctors.extend(d)
 
