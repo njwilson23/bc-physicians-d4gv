@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+  </head>
+
+  <body>
+
+    <style>
+
+      .riding {
+        fill: none;
+        stroke: #222;
+        stroke-linejoin: round;
+      }
+
+      .riding:hover {
+        stroke-width: 2;
+
+    </style>
+
+    <div id="map"></div>
+    <div id="info"></div>
+    <script>
+
+      var width = 800,
+          height = 600;
+
+      var svg = d3.select("#map")
+        .append("svg")
+          .attr("width", width)
+          .attr("height", height);
+
+      function rescale(a, min, max) {
+        return min + a * (max-min);
+      }
+
+      var color = d3.scaleThreshold()
+        .domain(d3.range(10).map((a) => rescale(a/10, 1/2000, 1/300)))
+        .range(d3.schemeGnBu[9]);
+
+      var projection = d3.geoMercator()
+        .scale(1500)
+        .center([-125, 55])
+        .translate([width / 2, height / 2]);
+
+      var path = d3.geoPath()
+        .projection(projection);
+
+      d3.queue()
+        .defer(d3.json, "edsre2015-simplified.geojson")
+        .defer(d3.csv, "demographics.csv")
+        .await(ready);
+
+      function ready(error, ridings, demographics) {
+        if (error) throw error;
+
+        var seniorCols = ["60-64", "65-69", "70-74", "75-79", "80-84","85+"];
+
+        /* SVG paths expect rings to be clockwise, which is opposite of what GeoJSON
+           does by default. */
+        ridings.features = ridings.features.map((r) => {
+          r.geometry.coordinates[0].reverse();
+          return r;
+        });
+
+        ridings.features.forEach(function(r) {
+          r.properties.NumDoctors = NaN;
+          r.properties.Population = NaN;
+          r.properties.MedianAge = NaN;
+          r.properties.PopulationOver60 = NaN;
+
+          var dem = demographics
+            .filter((d) => r.properties.ED_NAME === d[""]);
+          if (dem.length === 1) {
+            var d = dem[0];
+            r.properties.NumDoctors = +d.NumDoctors;
+            r.properties.Population = +d.Population;
+            r.properties.MedianAge = +d.MedianAge;
+            r.properties.PopulationOver60 = seniorCols
+              .map((lbl) => +d[lbl])
+              .reduce((a, b) => a+b);
+          }
+        });
+
+        svg.append("g")
+          .selectAll("path")
+          .data(ridings.features)
+          .enter().append("path")
+            .attr("d", path)
+            .attr("class", "riding")
+            .attr("id", (d) => d.properties.ED_NAME)
+            .style("fill", (d) => color(d.properties.NumDoctors / d.properties.Population))
+            .on("mouseover", mouseHandler)
+            .on("mouseout", clearInfo)
+          .append("title")
+            .text((d) => (d.properties.Population / d.properties.NumDoctors));
+      }
+
+      function mouseHandler(d) {
+        var pName = document.createElement("p")
+        var pStat = document.createElement("p")
+        pName.innerHTML = d.properties.ED_NAME;
+        pStat.innerHTML = "Doctors per capita: " + Math.round(d.properties.Population / d.properties.NumDoctors);
+        var div = document.querySelector("#info");
+        div.appendChild(pName);
+        div.appendChild(pStat);
+      }
+
+      function clearInfo(d) {
+        div = document.querySelector("#info");
+        while (div.firstChild) {
+          div.removeChild(div.firstChild);
+        }
+      }
+
+
+    </script>
+  </body>
+</html>
