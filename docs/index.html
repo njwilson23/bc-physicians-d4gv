@@ -104,7 +104,7 @@
         var pName = document.createElement("p")
         var pStat = document.createElement("p")
         pName.innerHTML = d.properties.ED_NAME;
-        pStat.innerHTML = "Doctors per capita: " + Math.round(d.properties.Population / d.properties.NumDoctors);
+        pStat.innerHTML = "Population per doctor: " + Math.round(d.properties.Population / d.properties.NumDoctors);
         var div = document.querySelector("#info");
         div.appendChild(pName);
         div.appendChild(pStat);
