@@ -69,6 +69,7 @@ def extract_doctor(tag):
     for s in td.strings:
         d["practice"] = s
         break
+    td = td.next_sibling
     d["gender"] = td.text
     td = td.next_sibling
     d["accepting_new_patients"] = td.text
