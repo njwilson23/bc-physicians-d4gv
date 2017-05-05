@@ -31,7 +31,7 @@
 
       var width = 800,
         height = 600,
-        mapVariable = "PopulationPerDoctor";
+        mapVariable = "MedianAge";
 
       var svg = d3.select("#map")
         .append("svg")
@@ -43,7 +43,7 @@
       }
 
       var color = d3.scaleThreshold()
-        .domain(d3.range(10).map((a) => rescale(a/10, 100, 2000)))
+        .domain(d3.range(10).map((a) => rescale(a/10, 30, 60)))
         .range(d3.schemeGnBu[9]);
 
       var projection = d3.geoMercator()
@@ -83,20 +83,17 @@
       }
 
       function mouseHandler(d) {
+        console.log(d);
         var pName = document.createElement("p")
         var pStat = document.createElement("p")
-        var pStat2 = document.createElement("p")
 
         pName.innerHTML = d.properties.Riding;
-        pStat.innerHTML = "Population per doctor: " +
-          Math.round(d.properties['PopulationPerDoctor']);
-        pStat2.innerHTML = "Population (65+) per doctor: " +
-          Math.round(d.properties['Population65+PerDoctor']);
+        pStat.innerHTML = "Median Age: " +
+          Math.round(d.properties[mapVariable]);
 
         var div = document.querySelector("#info");
         div.appendChild(pName);
         div.appendChild(pStat);
-        div.appendChild(pStat2);
       }
 
       function clearInfo(d) {
