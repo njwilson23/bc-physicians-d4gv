@@ -40,6 +40,7 @@ for riding in ridings:
     riding.properties["DoctorCount"] = len(doctors_in_riding)
     riding.properties["DoctorCountAcceptingNewPatients"] = \
             int(np.sum([a == "Yes" for a in doctors_in_riding.d["Accepting_New_Patients"]]))
+    riding.properties["MedianAge"] = census.loc[riding.properties["ED_NAME"], "MedianAge"]
     riding.properties["Population"] = census.loc[riding.properties["ED_NAME"], "Population"]
     riding.properties["Population65+"] = census.loc[riding.properties["ED_NAME"], "65-69"] + \
                                         census.loc[riding.properties["ED_NAME"], "70-74"] + \
@@ -61,6 +62,7 @@ def coordinates(geom):
 
 features = [Feature(Polygon(coordinates(riding_simple)),
                 {"Riding": riding.properties["ED_NAME"],
+                 "MedianAge": riding.properties["MedianAge"],
                  "Population": riding.properties["Population"],
                  "Population65+": riding.properties["Population65+"],
                  "PopulationPerDoctor": riding.properties["PopulationPerDoctor"],
