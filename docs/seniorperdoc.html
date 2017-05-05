@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <title>BC physicians per capita by riding</title>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+  </head>
+
+  <body>
+
+    <style>
+
+      .riding {
+        fill: none;
+        stroke: #222;
+        stroke-width: 0.5;
+        stroke-linejoin: round;
+      }
+
+      .riding:hover {
+        stroke: #F22;
+        stroke-width: 2;
+
+    </style>
+
+    <div id="map"></div>
+    <div id="info"></div>
+    <script>
+
+      var width = 800,
+        height = 600,
+        mapVariable = "Population65+PerDoctor";
+
+      var svg = d3.select("#map")
+        .append("svg")
+          .attr("width", width)
+          .attr("height", height);
+
+      function rescale(a, min, max) {
+        return min + a * (max-min);
+      }
+
+      var color = d3.scaleThreshold()
+        .domain(d3.range(10).map((a) => rescale(a/10, 30, 400)))
+        .range(d3.schemeGnBu[9]);
+
+      var projection = d3.geoMercator()
+        .scale(1500)
+        .center([-125, 55])
+        .translate([width / 2, height / 2]);
+
+      var path = d3.geoPath()
+        .projection(projection);
+
+      d3.queue()
+        .defer(d3.json, "doctors-plus-stats.geojson")
+        .await(ready);
+
+      function ready(error, ridings) {
+        if (error) throw error;
+
+        /* SVG paths expect rings to be clockwise, which is opposite of what GeoJSON
+           does by default. */
+        ridings.features = ridings.features.map((r) => {
+          r.geometry.coordinates[0].reverse();
+          return r;
+        });
+
+        svg.append("g")
+          .selectAll("path")
+          .data(ridings.features)
+          .enter().append("path")
+            .attr("d", path)
+            .attr("class", "riding")
+            .attr("id", (d) => d.properties.Riding)
+            .style("fill", (d) => color(d.properties[mapVariable]))
+            .on("mouseover", mouseHandler)
+            .on("mouseout", clearInfo)
+          .append("title")
+            .text((d) => (Math.floor(d.properties[mapVariable])));
+      }
+
+      function mouseHandler(d) {
+        var pName = document.createElement("p")
+        var pStat = document.createElement("p")
+        var pStat2 = document.createElement("p")
+
+        pName.innerHTML = d.properties.Riding;
+        pStat.innerHTML = "Population per doctor: " +
+          Math.round(d.properties['PopulationPerDoctor']);
+        pStat2.innerHTML = "Population (65+) per doctor: " +
+          Math.round(d.properties['Population65+PerDoctor']);
+
+        var div = document.querySelector("#info");
+        div.appendChild(pName);
+        div.appendChild(pStat);
+        div.appendChild(pStat2);
+      }
+
+      function clearInfo(d) {
+        div = document.querySelector("#info");
+        while (div.firstChild) {
+          div.removeChild(div.firstChild);
+        }
+      }
+
+
+    </script>
+  </body>
+</html>
