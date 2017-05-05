@@ -14,10 +14,12 @@
       .riding {
         fill: none;
         stroke: #222;
+        stroke-width: 0.5;
         stroke-linejoin: round;
       }
 
       .riding:hover {
+        stroke: #F22;
         stroke-width: 2;
 
     </style>
@@ -51,14 +53,11 @@
         .projection(projection);
 
       d3.queue()
-        .defer(d3.json, "edsre2015-simplified.geojson")
-        .defer(d3.csv, "demographics.csv")
+        .defer(d3.json, "doctors-plus-stats.geojson")
         .await(ready);
 
-      function ready(error, ridings, demographics) {
+      function ready(error, ridings) {
         if (error) throw error;
-
-        var seniorCols = ["60-64", "65-69", "70-74", "75-79", "80-84","85+"];
 
         /* SVG paths expect rings to be clockwise, which is opposite of what GeoJSON
            does by default. */
@@ -67,47 +66,31 @@
           return r;
         });
 
-        ridings.features.forEach(function(r) {
-          r.properties.NumDoctors = NaN;
-          r.properties.Population = NaN;
-          r.properties.MedianAge = NaN;
-          r.properties.PopulationOver60 = NaN;
-
-          var dem = demographics
-            .filter((d) => r.properties.ED_NAME === d[""]);
-          if (dem.length === 1) {
-            var d = dem[0];
-            r.properties.NumDoctors = +d.NumDoctors;
-            r.properties.Population = +d.Population;
-            r.properties.MedianAge = +d.MedianAge;
-            r.properties.PopulationOver60 = seniorCols
-              .map((lbl) => +d[lbl])
-              .reduce((a, b) => a+b);
-          }
-        });
-
         svg.append("g")
           .selectAll("path")
           .data(ridings.features)
           .enter().append("path")
             .attr("d", path)
             .attr("class", "riding")
-            .attr("id", (d) => d.properties.ED_NAME)
-            .style("fill", (d) => color(d.properties.NumDoctors / d.properties.Population))
+            .attr("id", (d) => d.properties.Riding)
+            .style("fill", (d) => color(d.properties.DoctorCount / d.properties.Population))
             .on("mouseover", mouseHandler)
             .on("mouseout", clearInfo)
           .append("title")
-            .text((d) => (d.properties.Population / d.properties.NumDoctors));
+            .text((d) => (Math.floor(d.properties.Population / d.properties.DoctorCount)));
       }
 
       function mouseHandler(d) {
         var pName = document.createElement("p")
         var pStat = document.createElement("p")
-        pName.innerHTML = d.properties.ED_NAME;
-        pStat.innerHTML = "Population per doctor: " + Math.round(d.properties.Population / d.properties.NumDoctors);
+        var pStat2 = document.createElement("p")
+        pName.innerHTML = d.properties.Riding;
+        pStat.innerHTML = "Population per doctor: " + Math.round(d.properties.Population / d.properties.DoctorCount);
+        pStat2.innerHTML = "Population (65+) per doctor: " + Math.round(d.properties['Population65+'] / d.properties.DoctorCount);
         var div = document.querySelector("#info");
         div.appendChild(pName);
         div.appendChild(pStat);
+        div.appendChild(pStat2);
       }
 
       function clearInfo(d) {
