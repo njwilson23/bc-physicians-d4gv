@@ -120,8 +120,8 @@ while len(queries_to_try) != 0:
     else:
         result_path = "results/{}-{}.json".format(city, last_name_prefix)
 
-    if os.path.isfile(result_path):
-        continue
+    #if os.path.isfile(result_path):
+    #    continue
 
     try:
         params = make_params(city, last_name_prefix, nonce)
@@ -149,7 +149,7 @@ while len(queries_to_try) != 0:
             queries_to_try.append((city, letter))
 
     except NoResultsError:
-        pass
+        print("no doctors found for {} {}".format(city, last_name_prefix))
 
     if len(doctors) != 0:
         with open(result_path, "w") as f:

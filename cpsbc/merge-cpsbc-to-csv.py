@@ -3,7 +3,7 @@ import json
 import pandas
 import functools
 
-VERSION = "0.2.3"
+VERSION = "0.2.6"
 
 outfnm = "CPSBC-data-v{}.csv".format(VERSION)
 if os.path.exists(outfnm):
