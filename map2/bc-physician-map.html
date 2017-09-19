@@ -14,127 +14,126 @@
             integrity="sha512-lInM/apFSqyy1o6s89K4iQUKg6ppXEgsVxT35HbzUupEVRh2Eu9Wdl4tHj7dZO0s1uvplcYGmt3498TtHq+log=="
             crossorigin="">
     </script>
-    <script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   </head>
   <body>
 
-   <div id="map"></div>
+  <div class="content">
+    <div id="map"></div>
+    <div id="scatterplot"></div>
+    <div id="barplot"></div>
+  </div>
 
-   <div class="container">
-     <div id="scatterplot"></div> <div id="barplot"></div>
-   </div>
+  <script>
 
-   <script>
+    var layer = new L.tileLayer("https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}.jpg",
+        {attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.'});
+   var map = new L.Map("map", {
+       center: new L.LatLng(52, -123),
+       zoom: 6
+   });
+   map.addLayer(layer);
 
-    var layer = new L.StamenTileLayer("terrain");
-    var map = new L.Map("map", {
-        center: new L.LatLng(52, -123),
-        zoom: 6
-    });
-    map.addLayer(layer);
+   var colors = ['#ffffcc','#ffeda0','#fed976','#feb24c','#fd8d3c','#fc4e2a','#e31a1c','#bd0026','#800026'].reverse();
 
-    var colors = ['#ffffcc','#ffeda0','#fed976','#feb24c','#fd8d3c','#fc4e2a','#e31a1c','#bd0026','#800026'].reverse();
+   function interpColor(colors, value) {
+     var n = colors.length;
+     return colors[Math.floor((n-1) * Math.min(1.0, Math.max(0.0, value)))];
+   }
 
-    function interpColor(colors, value) {
-      var n = colors.length;
-      return colors[Math.floor((n-1) * Math.min(1.0, Math.max(0.0, value)))];
-    }
+   function styleFeature(feature) {
+     var props = feature.properties;
+     var doctorDensity = props.DoctorsAcceptingNewPatients / props.DistrictPopulation;
+     return {
+       fillColor: interpColor(colors, doctorDensity * 20000),
+       fillOpacity: 0.5,
+       weight: 1.0,
+       color: "white"
+     };
+   }
 
-    function styleFeature(feature) {
-      var props = feature.properties;
-      var doctorDensity = props.DoctorsAcceptingNewPatients / props.DistrictPopulation;
-      return {
-        fillColor: interpColor(colors, doctorDensity * 20000),
-        fillOpacity: 0.5,
-        weight: 1.0,
-        color: "white"
-      };
-    }
+   function onEachFeature(feature, layer) {
+     if (feature.properties && feature.properties.Doctors) {
+       var props = feature.properties;
+       var docsPer100k = Math.floor(props.DoctorsAcceptingNewPatients / props.DistrictPopulation * 100000);
+       var popupString = props.REGIONAL_DISTRICT_NAME + "<br>" + props.DoctorsAcceptingNewPatients + " physicians accepting new patients<br>(" + docsPer100k + " per 100,000)";
+       layer.bindTooltip(popupString);
+       layer.on("tooltipopen", function(feature) {
+         layer.bringToFront();
+         layer.setStyle({ weight: 2, color: "black" });
+       });
+       layer.on("tooltipclose", function(feature) {
+         layer.setStyle({ weight: 1, color: "white" });
+       });
+       //layer.on("hover")
+     }
+   }
 
-    function onEachFeature(feature, layer) {
-      if (feature.properties && feature.properties.Doctors) {
-        var props = feature.properties;
-        var docsPer100k = Math.floor(props.DoctorsAcceptingNewPatients / props.DistrictPopulation * 100000);
-        var popupString = props.REGIONAL_DISTRICT_NAME + "<br>" + props.DoctorsAcceptingNewPatients + " physicians accepting new patients<br>(" + docsPer100k + " per 100,000)";
-        layer.bindTooltip(popupString);
-        layer.on("tooltipopen", function(feature) {
-          layer.bringToFront();
-          layer.setStyle({ weight: 2, color: "black" });
-        });
-        layer.on("tooltipclose", function(feature) {
-          layer.setStyle({ weight: 1, color: "white" });
-        });
-        //layer.on("hover")
-      }
-    }
-
-    var req = new XMLHttpRequest();
-    req.addEventListener("load", function() {
-      var regions = JSON.parse(this.responseText);
-      L.geoJSON(regions, {
-        onEachFeature: onEachFeature,
-          style: styleFeature
-      }).addTo(map);
-      return
-    });
-    req.open("GET", "regions.json");
-    req.send();
-
-
-    var dataByDistrict = JSON.parse('[{"RegionName":"Alberni-Clayoquot","Accepting_New_Patients":7,"General_Family_Practice":34,"Population":30721},{"RegionName":"Capital","Accepting_New_Patients":3,"General_Family_Practice":690,"Population":382645},{"RegionName":"Cariboo","Accepting_New_Patients":8,"General_Family_Practice":67,"Population":63111},{"RegionName":"Central Coast","Accepting_New_Patients":5,"General_Family_Practice":14,"Population":3248},{"RegionName":"Central Okanagan","Accepting_New_Patients":2,"General_Family_Practice":153,"Population":197075},{"RegionName":"Columbia-Shuswap","Accepting_New_Patients":28,"General_Family_Practice":91,"Population":52021},{"RegionName":"Comox","Accepting_New_Patients":9,"General_Family_Practice":141,"Population":64847},{"RegionName":"Cowichan Valley","Accepting_New_Patients":3,"General_Family_Practice":137,"Population":84014},{"RegionName":"Fraser Valley","Accepting_New_Patients":5,"General_Family_Practice":252,"Population":301238},{"RegionName":"Greater Vancouver","Accepting_New_Patients":68,"General_Family_Practice":2368,"Population":2558029},{"RegionName":"Peace River","Accepting_New_Patients":15,"General_Family_Practice":68,"Population":66504},{"RegionName":"Powell River","Accepting_New_Patients":2,"General_Family_Practice":39,"Population":20328},{"RegionName":"Bulkley-Nechako","Accepting_New_Patients":11,"General_Family_Practice":65,"Population":40383},{"RegionName":"Central Kootenay","Accepting_New_Patients":10,"General_Family_Practice":111,"Population":60775},{"RegionName":"East Kootenay","Accepting_New_Patients":8,"General_Family_Practice":105,"Population":58960},{"RegionName":"Fraser-Fort George","Accepting_New_Patients":21,"General_Family_Practice":340,"Population":90915},{"RegionName":"Kitimat-Stikine","Accepting_New_Patients":14,"General_Family_Practice":56,"Population":36270},{"RegionName":"Kootenay-Boundary","Accepting_New_Patients":18,"General_Family_Practice":72,"Population":29926},{"RegionName":"Mount Waddington","Accepting_New_Patients":7,"General_Family_Practice":14,"Population":11139},{"RegionName":"Nanaimo","Accepting_New_Patients":0,"General_Family_Practice":167,"Population":157599},{"RegionName":"North Okanagan","Accepting_New_Patients":3,"General_Family_Practice":125,"Population":85164},{"RegionName":"Okanagan-Similkameen","Accepting_New_Patients":3,"General_Family_Practice":146,"Population":80622},{"RegionName":"North Coast ","Accepting_New_Patients":7,"General_Family_Practice":35,"Population":17389},{"RegionName":"Squamish-Lillooet","Accepting_New_Patients":30,"General_Family_Practice":89,"Population":41531},{"RegionName":"Strathcona","Accepting_New_Patients":13,"General_Family_Practice":80,"Population":46175},{"RegionName":"Sunshine Coast","Accepting_New_Patients":8,"General_Family_Practice":50,"Population":29243},{"RegionName":"Thompson-Nicola","Accepting_New_Patients":4,"General_Family_Practice":129,"Population":135074}]')
-
-    var popVsDoctors = {
-      x: dataByDistrict.map((obj) => obj.Population),
-      y: dataByDistrict.map((obj) => obj.Accepting_New_Patients),
-      text: dataByDistrict.map((obj) => obj.RegionName),
-      mode: "markers",
-      type: "scatter"
-    };
-
-    var plotLayout = {
-      xaxis: {
-        range: [0, 500000],
-        title: "Region population"
-      },
-      yaxis: {
-        range: [0, 40],
-        title: "Doctors accepting new patients"
-      },
-      title: "Doctors accepting new patients vs population"
-    };
-
-    Plotly.newPlot("scatterplot", [popVsDoctors], plotLayout);
+   var req = new XMLHttpRequest();
+   req.addEventListener("load", function() {
+     var regions = JSON.parse(this.responseText);
+     L.geoJSON(regions, {
+       onEachFeature: onEachFeature,
+         style: styleFeature
+     }).addTo(map);
+     return
+   });
+   req.open("GET", "regions.json");
+   req.send();
 
 
-    var doctorsByRegion = {
-      x: dataByDistrict.map((obj) => obj.RegionName),
-      y: dataByDistrict.map((obj) => obj.General_Family_Practice - obj.Accepting_New_Patients),
-      type: "bar",
-      name: "Not accepting new patients"
-    };
+   var dataByDistrict = JSON.parse('[{"RegionName":"Alberni-Clayoquot","Accepting_New_Patients":7,"General_Family_Practice":34,"Population":30721},{"RegionName":"Capital","Accepting_New_Patients":3,"General_Family_Practice":690,"Population":382645},{"RegionName":"Cariboo","Accepting_New_Patients":8,"General_Family_Practice":67,"Population":63111},{"RegionName":"Central Coast","Accepting_New_Patients":5,"General_Family_Practice":14,"Population":3248},{"RegionName":"Central Okanagan","Accepting_New_Patients":2,"General_Family_Practice":153,"Population":197075},{"RegionName":"Columbia-Shuswap","Accepting_New_Patients":28,"General_Family_Practice":91,"Population":52021},{"RegionName":"Comox","Accepting_New_Patients":9,"General_Family_Practice":141,"Population":64847},{"RegionName":"Cowichan Valley","Accepting_New_Patients":3,"General_Family_Practice":137,"Population":84014},{"RegionName":"Fraser Valley","Accepting_New_Patients":5,"General_Family_Practice":252,"Population":301238},{"RegionName":"Greater Vancouver","Accepting_New_Patients":68,"General_Family_Practice":2368,"Population":2558029},{"RegionName":"Peace River","Accepting_New_Patients":15,"General_Family_Practice":68,"Population":66504},{"RegionName":"Powell River","Accepting_New_Patients":2,"General_Family_Practice":39,"Population":20328},{"RegionName":"Bulkley-Nechako","Accepting_New_Patients":11,"General_Family_Practice":65,"Population":40383},{"RegionName":"Central Kootenay","Accepting_New_Patients":10,"General_Family_Practice":111,"Population":60775},{"RegionName":"East Kootenay","Accepting_New_Patients":8,"General_Family_Practice":105,"Population":58960},{"RegionName":"Fraser-Fort George","Accepting_New_Patients":21,"General_Family_Practice":340,"Population":90915},{"RegionName":"Kitimat-Stikine","Accepting_New_Patients":14,"General_Family_Practice":56,"Population":36270},{"RegionName":"Kootenay-Boundary","Accepting_New_Patients":18,"General_Family_Practice":72,"Population":29926},{"RegionName":"Mount Waddington","Accepting_New_Patients":7,"General_Family_Practice":14,"Population":11139},{"RegionName":"Nanaimo","Accepting_New_Patients":0,"General_Family_Practice":167,"Population":157599},{"RegionName":"North Okanagan","Accepting_New_Patients":3,"General_Family_Practice":125,"Population":85164},{"RegionName":"Okanagan-Similkameen","Accepting_New_Patients":3,"General_Family_Practice":146,"Population":80622},{"RegionName":"North Coast ","Accepting_New_Patients":7,"General_Family_Practice":35,"Population":17389},{"RegionName":"Squamish-Lillooet","Accepting_New_Patients":30,"General_Family_Practice":89,"Population":41531},{"RegionName":"Strathcona","Accepting_New_Patients":13,"General_Family_Practice":80,"Population":46175},{"RegionName":"Sunshine Coast","Accepting_New_Patients":8,"General_Family_Practice":50,"Population":29243},{"RegionName":"Thompson-Nicola","Accepting_New_Patients":4,"General_Family_Practice":129,"Population":135074}]')
 
-    comparer = (a, b) => (a.Population < b.Population) ? -1 : (a.Population == b.Population) ? 0 : 1;
+   var popVsDoctors = {
+     x: dataByDistrict.map((obj) => obj.Population),
+     y: dataByDistrict.map((obj) => obj.Accepting_New_Patients),
+     text: dataByDistrict.map((obj) => obj.RegionName),
+     mode: "markers",
+     type: "scatter"
+   };
 
-    dataByDistrict.sort(comparer);
+   var plotLayout = {
+     xaxis: {
+       range: [0, 500000],
+       title: "Region population"
+     },
+     yaxis: {
+       range: [0, 40],
+       title: "Doctors accepting new patients"
+     },
+     title: "Doctors accepting new patients vs population"
+   };
 
-    var acceptingNewPatientsByRegion = {
-      x: dataByDistrict.map((obj) => obj.RegionName),
-      y: dataByDistrict.map((obj) => obj.Accepting_New_Patients),
-      type: "bar",
-      name: "Accepting new patients"
-    };
+   Plotly.newPlot("scatterplot", [popVsDoctors], plotLayout);
 
-    console.log(acceptingNewPatientsByRegion);
 
-    var barLayout = {
-      barmode: "stack",
-      showlegend: false
-    };
+   var doctorsByRegion = {
+     x: dataByDistrict.map((obj) => obj.RegionName),
+     y: dataByDistrict.map((obj) => obj.General_Family_Practice - obj.Accepting_New_Patients),
+     type: "bar",
+     name: "Not accepting new patients"
+   };
 
-    Plotly.newPlot("barplot", [doctorsByRegion, acceptingNewPatientsByRegion], barLayout);
+   comparer = (a, b) => (a.Population < b.Population) ? -1 : (a.Population == b.Population) ? 0 : 1;
 
-   </script>
+   dataByDistrict.sort(comparer);
+
+   var acceptingNewPatientsByRegion = {
+     x: dataByDistrict.map((obj) => obj.RegionName),
+     y: dataByDistrict.map((obj) => obj.Accepting_New_Patients),
+     type: "bar",
+     name: "Accepting new patients"
+   };
+
+   var barLayout = {
+     barmode: "stack",
+     showlegend: false,
+     title: "Doctors accepting new patients by Regional District"
+   };
+
+   Plotly.newPlot("barplot", [doctorsByRegion, acceptingNewPatientsByRegion], barLayout);
+
+  </script>
   </body>
 
 </html>

@@ -15,8 +15,7 @@ class NoResultsError(Exception):
 if not os.path.isdir("results"):
     os.mkdir("results")
 
-with open("cities.json") as f:
-    cities = json.load(f).get("cities", [])
+cities = ["100 Mile House","108 Mile Ranch","150 Mile House","Abbotsford","Agassiz","Aiyansh","Aldergrove","Alert Bay","Anmore","Argenta","Armstrong","Ashcroft","Atlin","Bamfield","Banff","Barriere","Battleford","Belcarra","Bella Bella","Bella Coola","Black Creek","Blind Bay","Blue River","Bonnington","Bowen Island","Bowser","Brackendale","Brentwood Bay","Brockville","Burnaby","Burns Lake","Calgary","Campbell River","Canoe","Cassidy","Castlegar","Cawston","Cedar","Charlie Lake","Chase","Chemainus","Chetwynd","Chicago","Chilliwack","Christina Lake","Clearwater","Clinton","Cobble Hill","Coldstream","Colwood, BC","Comox","Coquitalm","Coquitlam","Courtenay","Cranbrook","Crawford Bay","Creston","Cultus Lake","Cumberland","Dawson City","Dawson Creek","Dease Lake","Delta","Denman Island","Denny Island","Dewdney","Duncan","Edmonton","Egmont","Elkford","Enderby","Erickson","Errington","Esquimalt","Fairmont Hot Springs","Fanny Bay","Fernie","Field","Fort Langley","Fort Nelson","Fort St James","Fort St John","Fort St. James","Fort St. John","Fort Steele","Fraser Lake","Fredericton","Fruitvale","Furry Creek","Gabriola","Galiano","Ganges","Garden Bay","Garibaldi Highlands","Gibsons","Gillies Bay","Gimli","Gold River","Golden","Grand Forks","Granisle","Granthams Landing","Grasmere","Gray Creek","Greenwood","Guelph","Hagensborg","Halfmoon Bay","Halifax","Harrison Hot Springs","Hazelton","Heriot Bay","High River","Hope","Hornby Island","Houston","Hudson's Hope","Invermere","Kaleden","Kamloops","Kaslo","Kelowna","Keremeos","Kimberley","Kingston","Kitimat","Knutsford","Kootenay Bay","Lac Le Jeune","Ladner","Ladysmith","Lake Country","Lake Cowichan","Langford","Langley","Lantzville","Lax Kw'alaams","Lazo","Lethbridge","Likely","Lillooet","Lindell Beach","Lions Bay","Lisburn","Logan Lake","Lumby","Lytton","Mackenzie","Madeira Park","Malahat","Manning Park","Mansons Landing","Maple Ridge","Mara","Marysville","Masset","Mayne","McBride","Merritt","Metchosin","Midway","Mill Bay","Milner","Mission","Montrose","Mount Lehman","Nakusp","Nanaimo","Nanoose Bay","Naramata","Nelson","New Aiyansh","New Denver","New Westminister","New Westminster","North Delta","North Saanich","North Vancouver","Not in Practice","Okanagan Falls","Oliver","Osoyoos","Ottawa","Owen Sound","Oyama","Panorama","Parksville","PATIALA","Peachland","Pemberton","Pender Island","Penticton","Pitt Meadows","Port Alberni","Port Alice","Port Clements","Port Coquitlam","Port Hardy","Port McNeill","Port Moody","Portland","Powell River","Prince George","Prince Rupert","Princeton","Qualicum Beach","Quathiaski Cove","Quebec","Queen Charlotte","Queen Charlotte City","Quesnel","Red Deer","Regina","Revelstoke","Richmond","Richmond Hill","Riondel","Roberts Creek","Rock Creek","Rosedale","Rossland","Rossland PO Box 1856","Royston","Saanichton","Salmo","Salmon Arm","Salt Spring Island","San Josef","Sardis","Saskatoon","Saturna","Sayward","Scotch Creek","Sechelt","Shawnigan Lake","Sherwood Park","Sicamous","Sidney","Slocan Park","Smithers","Sooke","Sorrento","South Surrey","Sparwood","Squamish","St Catharines","St. John's","Stewart","Stittsville","Stratford","Summerland","Sun Peaks","Surrey","Tahsis","Tampa","Tappen","Tatla Lake","Tatlayoko Lake","Telkwa","Terrace","Thetis Island","Tofino","Toronto","Trail","Tsawwassen","Tumbler Ridge","Ucluelet","Valemount","Vanciuver","Vancouber","Vancouver","Vanderhoof","Vernon","Victoria","View Royal","Waglisla","Wardner","Wasa","West Burlington","West Kelowna","West Vancouver","Westbank","Whaletown","Whistler","White Rock","Whitehorse","Williams Lake","Wilson Creek","Windermere","Winfield","Winlaw","Winnipeg","Youbou"]
 
 def get_nonce_and_cookie():
     req = requests.get(BASEURL)
@@ -113,15 +112,15 @@ queries_to_try = [(city, "") for city in cities]
 while len(queries_to_try) != 0:
     city, last_name_prefix = queries_to_try.pop()
 
-    print("{} {}".format(city, last_name_prefix))
-
     if last_name_prefix == "":
         result_path = "results/{}.json".format(city)
     else:
         result_path = "results/{}-{}.json".format(city, last_name_prefix)
 
-    #if os.path.isfile(result_path):
-    #    continue
+    if os.path.isfile(result_path):
+        continue
+
+    print("{} {}".format(city, last_name_prefix))
 
     try:
         params = make_params(city, last_name_prefix, nonce)

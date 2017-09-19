@@ -1,11 +1,11 @@
 import os
 import requests
-import picogeojson
 import re
 import json
 import pandas as pd
+import picogeojson as pico
 
-data = pd.read_csv("CPSBC-data-v0.2.6.csv")
+data = pd.read_csv("CPSBC-data-v0.2.7.csv")
 
 results = {}
 
@@ -34,7 +34,7 @@ for irow, row in data.iterrows():
                         })
 
     if resp.status_code == 200:
-        for pt in picogeojson.result_fromstring(resp.content.decode("utf-8")).features("Point"):
+        for pt in pico.result_fromstring(resp.content.decode("utf-8")).features("Point"):
             results[str(irow)] = {"lon": pt.geometry.coordinates[0],
                                   "lat": pt.geometry.coordinates[1],
                                   "name": row.Name,
@@ -58,18 +58,18 @@ for irow, row in data.iterrows():
         lon.append(results[str(irow)]["lon"])
         lat.append(results[str(irow)]["lat"])
 
-geotable = pandas.DataFrame(dict(index=index, Longitude=lon, Latitude=lat))
+geotable = pd.DataFrame(dict(index=index, Longitude=lon, Latitude=lat))
 
 geotable.to_csv("bc-geodata.csv")
 
-merged = pandas.concat([data, geotable[["Longitude", "Latitude"]]], axis=1)
+merged = pd.concat([data, geotable[["Longitude", "Latitude"]]], axis=1)
 
-feature_collection = picogeojson.FeatureCollection(
-    [picogeojson.Feature(
-        picogeojson.Point([row.Longitude, row.Latitude]),
-        {"Name": row.Name,
-         "Locality": row.Locality,
-         "Address": row.Address}) for _, row in merged.iterrows()])
+feature_collection = pico.FeatureCollection(
+    [pico.Feature(pico.Point([row.Longitude, row.Latitude]),
+                             {"Name": row.Name,
+                              "Locality": row.Locality,
+                              "Address": row.Address})
+     for _, row in merged.iterrows()])
 
 with open("doctors.geojson", "w") as f:
-    f.write(picogeojson.tostring(feature_collection))
+    f.write(pico.tostring(feature_collection))
